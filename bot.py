@@ -17,8 +17,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram import F
 from aiogram.types import CallbackQuery
 from aiogram.filters import StateFilter
-import os
-
+import os, json
+from dotenv import load_dotenv
+load_dotenv()
 # --- Настройки ---
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TABLE_NAME = os.getenv('TABLE_NAME')
@@ -26,7 +27,8 @@ SHEET_NAME = os.getenv('SHEET_NAME')
 
 # --- Авторизация в Google Sheets ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+
+creds = ServiceAccountCredentials.from_json_keyfile_name("etc/sectets/credentials.json", scope)
 client = gspread.authorize(creds)
 sheet = client.open(TABLE_NAME).worksheet(SHEET_NAME)
 
