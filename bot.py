@@ -19,6 +19,9 @@ from aiogram.types import CallbackQuery
 from aiogram.filters import StateFilter
 import os, json
 from dotenv import load_dotenv
+import asyncio
+import socket
+
 load_dotenv()
 # --- Настройки ---
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -66,19 +69,19 @@ async def start(message: Message):
 
 def parse_message(msg_text: str, msg_date: datetime):
     parts = msg_text.strip().split()
-
+   
     try:
         # Пробуем прочитать смещение в днях
         offset = int(parts[0])
         date = (msg_date + timedelta(days=offset)).date()
         category = parts[1].capitalize()
-        amount = float(parts[2].replace('.', ','))
+        amount = float(parts[2].replace(',', '.'))
         comment = " ".join(parts[3:])
     except ValueError:
         # Если смещения нет — значит дата = дата сообщения
         date = msg_date.date()
         category = parts[0].capitalize()
-        amount = float(parts[1].replace('.', ','))
+        amount = float((parts[1]).replace(',', '.'))
         comment = " ".join(parts[2:])
     
     return date.strftime('%d.%m.%Y'), category, amount, comment
@@ -127,7 +130,26 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.answer()
 
+
+# async def keep_port_open(port=10000):
+#     server = socket.socket()
+#     server.bind(("0.0.0.0", port))
+#     server.listen(1)
+#     while True:
+#         conn, _ = server.accept()
+#         conn.close()    
+
+async def background_loop():
+    while True:
+        await asyncio.sleep(60)
+
+async def main():
+    await asyncio.gather(
+        dp.start_polling(bot),
+        background_loop()
+    )       
+
 if __name__ == '__main__':
-    import asyncio
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(dp.start_polling(bot))
+    # asyncio.run(dp.start_polling(bot))
+    asyncio.run(main())
