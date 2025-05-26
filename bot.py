@@ -21,6 +21,8 @@ import os, json
 from dotenv import load_dotenv
 import asyncio
 import socket
+import asyncio
+import signal
 
 load_dotenv()
 # --- Настройки ---
@@ -128,28 +130,86 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
         f"✅ Добавлено: {category}, {amount} EUR, {date_str}, {comment}"
     )
     await state.clear()
-    await callback.answer()
+    await callback.answer()  
 
-
-# async def keep_port_open(port=10000):
-#     server = socket.socket()
-#     server.bind(("0.0.0.0", port))
-#     server.listen(1)
+# async def background_loop():
 #     while True:
-#         conn, _ = server.accept()
-#         conn.close()    
+#         await asyncio.sleep(60)
+
+# async def main():
+#     await asyncio.gather(
+#         dp.start_polling(bot),
+#         background_loop()
+#     )       
+
+# if __name__ == '__main__':
+#     logging.basicConfig(level=logging.INFO)
+#     # asyncio.run(dp.start_polling(bot))
+#     asyncio.run(main())
+
+stop_event = asyncio.Event()
 
 async def background_loop():
-    while True:
+    while not stop_event.is_set():
+        # Тут можно что-то делать периодически
         await asyncio.sleep(60)
 
-async def main():
-    await asyncio.gather(
-        dp.start_polling(bot),
-        background_loop()
-    )       
+async def start():
+    try:
+        await asyncio.gather(
+            dp.start_polling(bot),
+            background_loop()
+        )
+    except asyncio.CancelledError:
+        logging.info("Tasks cancelled. Shutting down...")
+
+def shutdown():
+    logging.info("SIGTERM received. Stopping...")
+    stop_event.set()
+
+def main():
+    loop = asyncio.get_event_loop()
+
+    # Обработка сигналов завершения
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, shutdown)
+
+    try:
+        loop.run_until_complete(start())
+    finally:
+        loop.run_until_complete(bot.session.close())
+        loop.close()
+        logging.info("Bot stopped.")
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    # asyncio.run(dp.start_polling(bot))
-    asyncio.run(main())
+    main()
+
+# stop_event = asyncio.Event()
+
+# async def background_loop():
+#     while not stop_event.is_set():
+#         # Тут может быть твоя логика
+#         await asyncio.sleep(60)
+
+# async def start():
+#     await asyncio.gather(
+#         dp.start_polling(bot),
+#         background_loop()
+#     )
+
+# def main():
+#     logging.basicConfig(level=logging.INFO)
+#     loop = asyncio.get_event_loop()
+
+#     try:
+#         loop.run_until_complete(start())
+#     except (KeyboardInterrupt, SystemExit):
+#         logging.info("Остановка по Ctrl+C или SIGTERM")
+#         stop_event.set()
+#         loop.run_until_complete(bot.session.close())
+#     finally:
+#         loop.close()
+#         logging.info("Бот остановлен.")
+
+# if __name__ == '__main__':
+#     main()
