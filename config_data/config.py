@@ -16,7 +16,8 @@ ADMINS_UID = os.getenv('ADMINS_UID')
 USER_FILES_JSON = "user_files.json"  # можно указать абсолютный путь, если нужно, иначе лежит там где bot.py
 
 GSCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", GSCOPE)
+# creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", GSCOPE)
+creds = ServiceAccountCredentials.from_json_keyfile_name("/etc/secrets/credentials.json", GSCOPE)
 client = gspread.authorize(creds)
 
 WEBHOOK_URL=os.getenv('WEBHOOK_URL')

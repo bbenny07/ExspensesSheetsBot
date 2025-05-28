@@ -56,14 +56,14 @@ async def set_bot_description(bot: Bot):
 async def on_startup(app):
     logging.info("Setting webhook...")
     await set_bot_description(bot)
-    await bot.set_webhook(WEBHOOK_URL)
+    await bot.set_webhook(url)
 
 async def on_shutdown(app):
     logging.info("Shutting down webhook...")
     await bot.delete_webhook()
 
 app = web.Application()
-webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=url)
+webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
 # Регистрируем обработчик запросов на определенном пути
 
 # Настраиваем приложение и связываем его с диспетчером и ботом
