@@ -11,10 +11,6 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 
 
-WEBHOOK_PATH = "/webhook"
-url = WEBHOOK_URL + WEBHOOK_PATH
-
-
 # bot = Bot(
 #     token=TELEGRAM_TOKEN,
 #     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -43,6 +39,9 @@ url = WEBHOOK_URL + WEBHOOK_PATH
 import os
 from dotenv import load_dotenv
 load_dotenv()
+
+WEBHOOK_PATH = "/webhook"
+url = WEBHOOK_URL + WEBHOOK_PATH
 bot = Bot(
     token=TELEGRAM_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -64,7 +63,12 @@ async def on_shutdown(app):
     await bot.delete_webhook()
 
 app = web.Application()
-SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+# Регистрируем обработчик запросов на определенном пути
+webhook_requests_handler.register(app, path=url)
+
+# Настраиваем приложение и связываем его с диспетчером и ботом
+setup_application(app, dp, bot=bot)
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
