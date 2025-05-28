@@ -63,9 +63,8 @@ async def on_shutdown(app):
     await bot.delete_webhook()
 
 app = web.Application()
-webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+webhook_requests_handler = SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=url)
 # Регистрируем обработчик запросов на определенном пути
-webhook_requests_handler.register(app, path=url)
 
 # Настраиваем приложение и связываем его с диспетчером и ботом
 setup_application(app, dp, bot=bot)
