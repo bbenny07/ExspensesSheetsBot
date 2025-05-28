@@ -18,3 +18,5 @@ USER_FILES_JSON = "user_files.json"  # можно указать абсолют�
 GSCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", GSCOPE)
 client = gspread.authorize(creds)
+
+WEBHOOK_URL=os.getenv('WEBHOOK_URL')
