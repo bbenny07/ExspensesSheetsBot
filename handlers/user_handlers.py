@@ -89,7 +89,8 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
     user_id, username = callback.from_user.id, callback.from_user.username
     table_name = await get_or_create_name_user_file(user_id, username)
     table = client.open(table_name)
-    table.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
+    sheet = table.worksheet(SHEET_NAME)
+    sheet.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
     await callback.message.answer(categories.ADDED_SUCCESSFULLY.format(
         category=category,
         amount=amount,

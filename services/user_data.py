@@ -40,7 +40,7 @@ async def get_or_create_name_user_file(user_id: int, username: str) -> str:
     uid = str(user_id)
     conn = await get_db_connection()
 
-    row = await conn.fetchrow("SELECT table_name FROM user_files WHERE user_id=$1", uid)
+    row = await conn.fetchrow("SELECT table_name FROM user_files WHERE user_id=$1", int(uid))
     if row:
         await conn.close()
         return row["table_name"]
@@ -51,9 +51,10 @@ async def get_or_create_name_user_file(user_id: int, username: str) -> str:
     else:
         table_name = TABLE_NAME
 
+    print(table_name)
     await conn.execute(
         "INSERT INTO user_files(user_id, username, table_name) VALUES($1, $2, $3)",
-        uid, username, table_name
+        int(uid), username, table_name
     )
     await conn.close()
     return table_name
@@ -64,7 +65,6 @@ def get_user_categories(table):
         categories = category_sheet.col_values(1)  # Столбец A
         return [cat.strip() for cat in categories if cat.strip()]
     except Exception as e:
-        # print(f"Ошибка при чтении категорий: {e}")
         return []
 
 def find_categories_for_user(partial, table):
