@@ -1,6 +1,6 @@
 import json
 import os
-from config_data.config import SHEET_CATEGORIES_NAME, USER_FILES_JSON, TABLE_NAME, ADMINS_UID, USER2_UID
+from config_data.config import SHEET_CATEGORIES_NAME, USER_FILES_JSON, TABLE_NAME, ADMINS_UID, USER2_UID, TABLE_USER2
 
 def load_user_files():
     if os.path.exists(USER_FILES_JSON):
@@ -18,14 +18,16 @@ def get_or_create_name_user_file(user_id, username):
     uid = str(user_id)
     if uid not in user_files:
         if uid == USER2_UID:
-            user_files[uid] = f"{TABLE_NAME}_{username}"
+            user_files[uid] = TABLE_USER2
             save_user_files(user_files)
+            print(TABLE_USER2, user_id)
         elif uid not in ADMINS_UID:
             user_files[uid] = f"{TABLE_NAME} {username}"
             save_user_files(user_files)
         else:
             user_files[uid] = TABLE_NAME
             save_user_files(user_files)
+    print(user_files[uid] )
     return user_files[uid]
 
 def get_user_categories(table):
