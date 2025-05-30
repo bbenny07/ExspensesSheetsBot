@@ -64,7 +64,7 @@ def get_user_categories(table):
         categories = category_sheet.col_values(1)  # Столбец A
         return [cat.strip() for cat in categories if cat.strip()]
     except Exception as e:
-        print(f"Ошибка при чтении категорий: {e}")
+        # print(f"Ошибка при чтении категорий: {e}")
         return []
 
 def find_categories_for_user(partial, table):

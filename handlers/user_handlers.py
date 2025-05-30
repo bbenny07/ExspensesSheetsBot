@@ -16,12 +16,13 @@ router = Router()
 @router.message(CommandStart())
 async def start(message: Message):
     user_id, username = message.from_user.id, message.from_user.username
-    table_name = get_or_create_name_user_file(user_id, username)
+    table_name = await get_or_create_name_user_file(user_id, username)
     await message.answer(messages.START.format(table_name=table_name))
 
 @router.message()
 async def handle_expense(message: Message, state: FSMContext):
-    table = client.open(get_or_create_name_user_file(message.from_user.id, message.from_user.username))
+    table_name = await get_or_create_name_user_file(message.from_user.id, message.from_user.username)
+    table = client.open(table_name)
     sheet = table.worksheet(SHEET_NAME)
     
     try:
@@ -57,7 +58,8 @@ async def handle_expense(message: Message, state: FSMContext):
 async def add_new_category(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     user_id, username = callback.from_user.id, callback.from_user.username
-    table = client.open(get_or_create_name_user_file(user_id, username))
+    table_name = await get_or_create_name_user_file(user_id, username)
+    table = client.open(table_name)
     
     try:
         cat_sheet = table.worksheet(SHEET_CATEGORIES_NAME)
@@ -85,7 +87,8 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
     comment = data.get("comment")
 
     user_id, username = callback.from_user.id, callback.from_user.username
-    table = client.open(get_or_create_name_user_file(user_id, username))
+    table_name = await get_or_create_name_user_file(user_id, username)
+    table = client.open(table_name)
     table.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
     await callback.message.answer(categories.ADDED_SUCCESSFULLY.format(
         category=category,
