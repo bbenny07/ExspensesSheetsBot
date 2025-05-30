@@ -1,6 +1,6 @@
 import json
 import os
-from config_data.config import SHEET_CATEGORIES_NAME, USER_FILES_JSON, TABLE_NAME, ADMINS_UID, USER2_UID, TABLE_USER2,DB_CONFIG
+from config_data.config import SHEET_CATEGORIES_NAME, USER_FILES_JSON, TABLE_NAME, ADMINS_UID, USER2_UID, TABLE_USER2,DATABASE_URL
 
 # def load_user_files():
 #     if os.path.exists(USER_FILES_JSON):
@@ -34,7 +34,7 @@ import asyncpg
 import asyncio
 
 async def get_db_connection():
-    return await asyncpg.connect(**DB_CONFIG)
+    return await asyncpg.connect(DATABASE_URL)
 
 async def get_or_create_name_user_file(user_id: int, username: str) -> str:
     uid = str(user_id)
