@@ -12,6 +12,7 @@ SHEET_CATEGORIES_NAME = 'Категории'
 TABLE_NAME='Мои траты'
 
 ADMINS_UID = os.getenv('ADMINS_UID')
+USER2_UID = os.getenv('USER2_UID')
 
 USER_FILES_JSON = "user_files.json"  # можно указать абсолютный путь, если нужно, иначе лежит там где bot.py
 
