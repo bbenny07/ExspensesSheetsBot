@@ -221,7 +221,7 @@ async def navigate_rows(callback: CallbackQuery, state: FSMContext):
         index = min(index + 1, len(rows) - 1)
     else:
         index = max(N_ROW_TEXT, index - 1)
-        index = min(index + 1, len(rows) - 1)
+        index = min(index, len(rows) - 1)
     row = rows[index]
     new_text = messages.CURRENT_ROW.format(index=index+1, current_row=format_row(row))
     if callback.message.text != new_text:
