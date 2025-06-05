@@ -5,7 +5,7 @@ START = (
     "🔗 <a href='https://docs.google.com/spreadsheets/d/1kL9qtZizHdXTNmPieUYLG3VqA7I15lcJYsbrxu7-etA/edit?usp=sharing'>Скопировать таблицу</a>\n"
     "Назови её — <b>{table_name}</b>\n\n"
     "🔐 Дай доступ для редактирования:\n"
-    "<code>{EMAIL_AGENT}</code>\n\n"
+    "<code>{email}</code>\n\n"
     "📌 <b>Форматы ввода трат:</b>\n"
     "• <code>категория сумма комментарий</code>\n"
     "• <code>дата категория сумма комментарий</code>\n"

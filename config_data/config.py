@@ -13,12 +13,8 @@ TABLE_NAME='Мои траты'
 
 ADMIN_UID = os.getenv('ADMIN_UID')
 ADMINS_UID = os.getenv("ADMINS_UID", "").split(",")
-# USER2_UID = os.getenv('USER2_UID')
-# TABLE_USER2 = os.getenv('TABLE_USER2')
 DATABASE_URL = os.getenv('DATABASE_URL')
 DB_CONFIG = os.getenv('DB_CONFIG')
-
-USER_FILES_JSON = "user_files.json"  # можно указать абсолютный путь, если нужно, иначе лежит там где bot.py
 
 GSCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
@@ -37,7 +33,6 @@ except Exception as e:
     
 client = gspread.authorize(creds)
 
-# WEBHOOK_URL=os.getenv('WEBHOOK_URL')
 EMAIL_AGENT = os.getenv('EMAIL_AGENT')
 N_ROW_TEXT = 3
 N_COLUMN = 4

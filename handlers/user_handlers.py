@@ -10,6 +10,7 @@ from services.parser_messages import parse_message, convert_data_datetime
 from config_data.config import client, N_ROW_TEXT, N_COLUMN
 from states.states import *
 from aiogram.filters import StateFilter
+import random
 
 router = Router()
 
@@ -24,7 +25,7 @@ def format_row(row: list) -> str:
 @router.message(CommandStart())
 async def start(message: Message, state: FSMContext):
     table_name = await get_or_create_name_user_file(message.from_user.id, message.from_user.username)
-    await message.answer(messages.START.format(table_name=table_name, EMAIL_AGENT=EMAIL_AGENT))
+    await message.answer(messages.START.format(table_name=table_name, email=EMAIL_AGENT))
 
 @router.message(Command('categories'))
 async def show_categories(message: Message, state: FSMContext):
@@ -319,11 +320,13 @@ async def handle_expense(message: Message, state: FSMContext):
         if len(matches) == 1:
             category = matches[0]
             sheet.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
+            phrase = random.choice(categories.SUPPORT_PHRASES)
             await message.answer(categories.ADDED_SUCCESSFULLY.format(
                 category=category,
                 amount=amount,
                 date=date_str,
-                comment=comment
+                comment=comment,
+                phrase=phrase
             ))
             rows = get_all_rows(table)
             await state.update_data(rows=rows)
