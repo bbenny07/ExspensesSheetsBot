@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from services.user_data import get_or_create_name_user_file, find_categories_for_user, get_user_categories, get_all_rows, edit_row_in_table, delete_row_if_empty_after_clear
 from keyboards.inline_keyboards import  get_row_edit_cancel_keyboard, get_cancelled_action_keyboard, category_selection_keyboard, add_or_rewrite_keyboard, get_feedback_menu_keyboard, get_cancel_feedback_keyboard, get_row_navigation_keyboard, get_delete_confirmation_keyboard
 from lexicon import messages, categories, commands
-from config_data.config import SHEET_NAME, SHEET_CATEGORIES_NAME, ADMIN_UID
+from config_data.config import SHEET_NAME, SHEET_CATEGORIES_NAME, ADMIN_UID, EMAIL_AGENT
 from services.parser_messages import parse_message, convert_data_datetime
 from config_data.config import client, N_ROW_TEXT, N_COLUMN
 from states.states import *
@@ -24,7 +24,7 @@ def format_row(row: list) -> str:
 @router.message(CommandStart())
 async def start(message: Message, state: FSMContext):
     table_name = await get_or_create_name_user_file(message.from_user.id, message.from_user.username)
-    await message.answer(messages.START.format(table_name=table_name))
+    await message.answer(messages.START.format(table_name=table_name, EMAIL_AGENT=EMAIL_AGENT))
 
 @router.message(Command('categories'))
 async def show_categories(message: Message, state: FSMContext):

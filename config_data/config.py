@@ -12,7 +12,7 @@ SHEET_CATEGORIES_NAME = 'Категории'
 TABLE_NAME='Мои траты'
 
 ADMIN_UID = os.getenv('ADMIN_UID')
-ADMINS_UID = os.getenv('ADMINS_UID')
+ADMINS_UID = os.getenv("ADMINS_UID", "").split(",")
 # USER2_UID = os.getenv('USER2_UID')
 # TABLE_USER2 = os.getenv('TABLE_USER2')
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -37,7 +37,7 @@ except Exception as e:
     
 client = gspread.authorize(creds)
 
-WEBHOOK_URL=os.getenv('WEBHOOK_URL')
-
+# WEBHOOK_URL=os.getenv('WEBHOOK_URL')
+EMAIL_AGENT = os.getenv('EMAIL_AGENT')
 N_ROW_TEXT = 3
 N_COLUMN = 4

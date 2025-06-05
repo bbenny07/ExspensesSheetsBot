@@ -4,7 +4,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 import asyncio
-from config_data.config import TELEGRAM_TOKEN, WEBHOOK_URL
+from config_data.config import TELEGRAM_TOKEN
 from handlers import user_handlers
 from lexicon import bot_description
 from keyboards.main_menu import set_main_menu
