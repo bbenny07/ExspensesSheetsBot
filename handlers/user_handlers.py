@@ -27,8 +27,12 @@ async def start(message: Message, state: FSMContext):
     await message.answer(messages.START.format(table_name=table_name))
 
 @router.message(Command('categories'))
-async def show_categories(message: Message):
-    table = await get_table(message.from_user.id, message.from_user.username)
+async def show_categories(message: Message, state: FSMContext):
+    data = await state.get_data()
+    table = data.get('table')
+    if table is None:
+        table = await get_table(message.from_user.id, message.from_user.username)
+        await state.update_data(table=table)
     categories_list = get_user_categories(table)
     categories_text = "\n".join(f"• {cat}" for cat in categories_list)
     await message.answer(categories.CATEGORIES_LIST.format(categories_text=categories_text))
@@ -39,7 +43,11 @@ async def help_command(message: Message):
 
 @router.message(Command('table'))
 async def show_table(message: Message, state: FSMContext):
-    table = await get_table(message.from_user.id, message.from_user.username)
+    data = await state.get_data()
+    table = data.get('table')
+    if table is None:
+        table = await get_table(message.from_user.id, message.from_user.username)
+        await state.update_data(table=table)
     rows = get_all_rows(table)
     current_row = rows[-1][:N_COLUMN]
     total_rows = len(rows)
@@ -50,7 +58,11 @@ async def show_table(message: Message, state: FSMContext):
 @router.callback_query(F.data.startswith("row_"))
 async def show_table_back(callback: CallbackQuery, state: FSMContext):
     index = int(callback.data.split("_")[1])
-    table = await get_table(callback.from_user.id, callback.from_user.username)
+    data = await state.get_data()
+    table = data.get('table')
+    if table is None:
+        table = await get_table(callback.from_user.id, callback.from_user.username)
+        await state.update_data(table=table)
     rows = get_all_rows(table)
     index = min(index, len(rows) - 1)
     current_row = rows[index][:N_COLUMN]
@@ -59,9 +71,13 @@ async def show_table_back(callback: CallbackQuery, state: FSMContext):
                          reply_markup=get_row_navigation_keyboard(index, total_rows))
 
 @router.callback_query(F.data.startswith("delete_"))
-async def confirm_delete_prompt(callback: CallbackQuery):
+async def confirm_delete_prompt(callback: CallbackQuery, state:FSMContext):
     index = int(callback.data.split("_")[1])
-    table = await get_table(callback.from_user.id, callback.from_user.username)
+    data = await state.get_data()
+    table = data.get('table')
+    if table is None:
+        table = await get_table(callback.from_user.id, callback.from_user.username)
+        await state.update_data(table=table)
     rows = get_all_rows(table)
     total_rows = len(rows)
     if index > total_rows - 1:
@@ -80,7 +96,11 @@ async def confirm_delete_prompt(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("confirm_delete_"))
 async def confirm_delete(callback: CallbackQuery, state: FSMContext):
     index = int(callback.data.split("_")[2])
-    table = await get_table(callback.from_user.id, callback.from_user.username)
+    data = await state.get_data()
+    table = data.get('table')
+    if table is None:
+        table = await get_table(callback.from_user.id, callback.from_user.username)
+        await state.update_data(table=table)
     rows = get_all_rows(table)
     total_rows = len(rows)
     if index > total_rows - 1:
@@ -99,6 +119,8 @@ async def confirm_delete(callback: CallbackQuery, state: FSMContext):
         text=text,
         reply_markup=get_row_navigation_keyboard(index, len(rows))
     )
+    rows = get_all_rows(table)
+    await state.update_data(rows=rows)
 
 @router.callback_query(F.data.startswith("cancel_delete_"))
 async def cancel_delete(callback: CallbackQuery):
@@ -107,7 +129,11 @@ async def cancel_delete(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith(("edit_")))
 async def edit_rows(callback: CallbackQuery, state: FSMContext):
-    table = await get_table(callback.from_user.id, callback.from_user.username)
+    data = await state.get_data()
+    table = data.get('table')
+    if table is None:
+        table = await get_table(callback.from_user.id, callback.from_user.username)
+        await state.update_data(table=table)
     index = int(callback.data.split("_")[1])
     rows = get_all_rows(table)
     total_rows = len(rows)
@@ -129,10 +155,13 @@ async def edit_rows(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("cancel_edit_"))
 async def cancel_edit_row(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    table = data.get('table')
     await callback.message.delete()
     # index = int(callback.data.split("_")[2])
     # await callback.message.edit_text(text=messages.EDIT_ROW_CANCELLED, reply_markup=get_cancelled_action_keyboard(index))
     await state.clear()
+    await state.up_data(table=table)
 
 @router.callback_query(F.data == "close_view")
 async def close_view_handler(callback: CallbackQuery):
@@ -212,11 +241,16 @@ async def process_edit_category_choice(callback: CallbackQuery, state: FSMContex
 
 @router.callback_query(F.data.startswith(("next_", "prev_")))
 async def navigate_rows(callback: CallbackQuery, state: FSMContext):
-
-    # data = await state.get_data()
+    await callback.answer(cache_time=1)
+    data = await state.get_data()
     index = int(callback.data.split('_')[1])
-    table = await get_table(callback.from_user.id, callback.from_user.username)
-    rows = get_all_rows(table)
+    rows = data.get('rows')
+    if rows is None:
+        table = data.get('table')
+        if table is None:
+            table = await get_table(callback.from_user.id, callback.from_user.username)
+        rows = get_all_rows(table)
+        await state.update_data(rows=rows, table=table)
     if callback.data.startswith("next_"):
         index = min(index + 1, len(rows) - 1)
     else:
@@ -263,10 +297,11 @@ async def cancel_feedback(callback: CallbackQuery, state: FSMContext):
 
 @router.message()
 async def handle_expense(message: Message, state: FSMContext):
-    table_name = await get_or_create_name_user_file(message.from_user.id, message.from_user.username)
-    table = client.open(table_name)
+    data = await state.get_data()
+    table = data.get('table')
+    if table is None:
+        table = await get_table(message.from_user.id, message.from_user.username)
     sheet = table.worksheet(SHEET_NAME)
-
     try:
         date_str, category, amount, comment = parse_message(message.text.strip(), message.date)
         matches = find_categories_for_user(category, table)
@@ -290,6 +325,8 @@ async def handle_expense(message: Message, state: FSMContext):
                 date=date_str,
                 comment=comment
             ))
+            rows = get_all_rows(table)
+            await state.update_data(rows=rows)
         else:
             keyboard = category_selection_keyboard(matches)
             await state.update_data(date_str=date_str, amount=amount, comment=comment)
@@ -302,25 +339,34 @@ async def handle_expense(message: Message, state: FSMContext):
 @router.callback_query(F.data == "add_category", StateFilter(Form.waiting_for_new_category_confirmation))
 async def add_new_category(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    user_id, username = callback.from_user.id, callback.from_user.username
-    table_name = await get_or_create_name_user_file(user_id, username)
-    table = client.open(table_name)
+    table = data.get('table')
+    if table is None:
+        table = await get_table(callback.from_user.id, callback.from_user.username)
     
     try:
         cat_sheet = table.worksheet(SHEET_CATEGORIES_NAME)
         cat_sheet.append_row([data["category"]])
         table.worksheet(SHEET_NAME).append_row([data["date_str"], data["category"], data["amount"], data["comment"]])
-        await callback.message.answer(categories.CATEGORY_ADDED.format(category=data["category"]))
+        await callback.message.answer(categories.CATEGORY_ADDED.format(category=data["category"], 
+                                                                       date=data["date_str"], 
+                                                                       amount=data["amount"], comment=data["comment"]))
     except Exception as e:
         await callback.message.answer(categories.CATEGORY_ADDED_ERROR.format(error=e))
     
     await state.clear()
+    rows = get_all_rows(table)
+    await state.update_data(rows=rows)
     await callback.answer()
 
 @router.callback_query(F.data == "rewrite_message", StateFilter(Form.waiting_for_new_category_confirmation))
 async def rewrite_message(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    table = data.get('table')
+    if table is None:
+        table = await get_table(callback.from_user.id, callback.from_user.username)
     await callback.message.answer(messages.REWRITE_MESSAGE)
     await state.clear()
+    await state.update_data(table=table)
     await callback.answer()
 
 @router.callback_query(F.data.startswith("category:"), StateFilter(Form.waiting_for_category_choice))
@@ -331,9 +377,9 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
     amount = data.get("amount")
     comment = data.get("comment")
 
-    user_id, username = callback.from_user.id, callback.from_user.username
-    table_name = await get_or_create_name_user_file(user_id, username)
-    table = client.open(table_name)
+    table = data.get('table')
+    if table is None:
+        table = await get_table(callback.from_user.id, callback.from_user.username)
     sheet = table.worksheet(SHEET_NAME)
     sheet.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
     await callback.message.answer(categories.ADDED_SUCCESSFULLY.format(
