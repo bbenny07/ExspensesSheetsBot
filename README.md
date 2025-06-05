@@ -17,7 +17,7 @@ A Telegram bot integrated with Google Sheets that lets users:
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/yourusername/telegram-table-bot.git](https://github.com/bbenny07/ExspensesSheetsBot.git)
+git clone https://github.com/bbenny07/ExspensesSheetsBot.git
 cd ExspensesSheetsBot
 pip install -r requirements.txt
 ```
