@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 import re
 
+def convert_data_datetime(date: str) -> datetime:
+    return datetime.strptime(date, "%d.%m.%Y")
+
 def parse_message(msg_text: str, msg_date: datetime):
     parts = msg_text.strip().split()
 
@@ -33,3 +36,4 @@ def parse_message(msg_text: str, msg_date: datetime):
         return None
 
     return date.strftime('%d.%m.%Y'), category, amount, comment
+
