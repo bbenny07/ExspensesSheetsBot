@@ -21,6 +21,7 @@ git clone https://github.com/bbenny07/ExspensesSheetsBot.git
 cd ExspensesSheetsBot
 pip install -r requirements.txt
 ```
+
 ## PostgreSQL Database Setup
 This bot requires a PostgreSQL database to store data.
 Install PostgreSQL (if not installed) from https://www.postgresql.org/download/.
