@@ -31,7 +31,7 @@ def get_row_navigation_keyboard(current_index: int, total_rows: int) -> InlineKe
     buts = []
 
     nav_buttons = []
-    if current_index > N_ROW_TEXT + 1:
+    if current_index > N_ROW_TEXT:
         nav_buttons.append(
             InlineKeyboardButton(text=buttons.NAV_PREV, callback_data=f"prev_{current_index}")
         )

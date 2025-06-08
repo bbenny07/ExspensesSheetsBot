@@ -53,6 +53,7 @@ async def show_table(message: Message, state: FSMContext):
     current_row = rows[-1][:N_COLUMN]
     total_rows = len(rows)
     current_index = total_rows - 1
+    await state.update_data(rows=rows)
     await message.answer(commands.COMMANDS_RESPONSES[message.text].format(last_line=format_row(current_row)),
                          reply_markup=get_row_navigation_keyboard(current_index, total_rows))
 
@@ -68,6 +69,7 @@ async def show_table_back(callback: CallbackQuery, state: FSMContext):
     index = min(index, len(rows) - 1)
     current_row = rows[index][:N_COLUMN]
     total_rows = len(rows)
+    await state.up_date(rows=rows)
     await callback.message.edit_text(messages.CURRENT_ROW.format(index=index+1,current_row=format_row(current_row)),
                          reply_markup=get_row_navigation_keyboard(index, total_rows))
 
@@ -392,5 +394,7 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
         comment=comment
     ))
     await state.clear()
+    rows = get_all_rows(table)
+    await state.update_data(rows=rows)
     await callback.answer() 
 
