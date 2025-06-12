@@ -2,11 +2,12 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart,Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
-from services.user_data import get_or_create_name_user_file, find_categories_for_user, get_user_categories, get_all_rows, edit_row_in_table, delete_row_if_empty_after_clear
+from services.user_data import get_or_create_name_user_file, find_closest_category, find_categories_for_user, get_user_categories, get_all_rows, edit_row_in_table, delete_row_if_empty_after_clear
 from keyboards.inline_keyboards import  get_row_edit_cancel_keyboard, get_cancelled_action_keyboard, category_selection_keyboard, add_or_rewrite_keyboard, get_feedback_menu_keyboard, get_cancel_feedback_keyboard, get_row_navigation_keyboard, get_delete_confirmation_keyboard
 from lexicon import messages, categories, commands
 from config_data.config import SHEET_NAME, SHEET_CATEGORIES_NAME, ADMIN_UID, EMAIL_AGENT
 from services.parser_messages import parse_message, convert_data_datetime
+from services.pick_phrases import pick_phrase
 from config_data.config import client, N_ROW_TEXT, N_COLUMN
 from states.states import *
 from aiogram.filters import StateFilter
@@ -188,7 +189,8 @@ async def handle_full_row_edit(message: Message, state: FSMContext):
         matches = find_categories_for_user(category, table)
         if not matches:
             await state.update_data(date_str=date_str, category=category, amount=amount, comment=comment)
-            keyboard = add_or_rewrite_keyboard()
+            close_matches = find_closest_category(category, table)
+            keyboard = add_or_rewrite_keyboard(categories=close_matches)
             await message.answer(
                 categories.CATEGORY_NOT_FOUND.format(category=category),
                 reply_markup=keyboard
@@ -311,7 +313,8 @@ async def handle_expense(message: Message, state: FSMContext):
 
         if not matches:
             await state.update_data(date_str=date_str, category=category, amount=amount, comment=comment)
-            keyboard = add_or_rewrite_keyboard()
+            close_matches = find_closest_category(category, table)
+            keyboard = add_or_rewrite_keyboard(categories=close_matches)
             await message.answer(
                 categories.CATEGORY_NOT_FOUND.format(category=category),
                 reply_markup=keyboard
@@ -322,7 +325,8 @@ async def handle_expense(message: Message, state: FSMContext):
         if len(matches) == 1:
             category = matches[0]
             sheet.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
-            phrase = random.choice(categories.SUPPORT_PHRASES)
+            # phrase = random.choice(categories.SUPPORT_PHRASES)
+            phrase = pick_phrase(date_str, category, amount, comment, table)
             await message.answer(categories.ADDED_SUCCESSFULLY.format(
                 category=category,
                 amount=amount,
@@ -338,7 +342,7 @@ async def handle_expense(message: Message, state: FSMContext):
             await message.answer(categories.MULTIPLE_CATEGORIES, reply_markup=keyboard)
             await state.set_state(Form.waiting_for_category_choice)
 
-    except Exception:
+    except Exception as e:
         await message.answer(messages.INVALID_FORMAT)
 
 @router.callback_query(F.data == "add_category", StateFilter(Form.waiting_for_new_category_confirmation))
@@ -374,7 +378,8 @@ async def rewrite_message(callback: CallbackQuery, state: FSMContext):
     await state.update_data(table=table)
     await callback.answer()
 
-@router.callback_query(F.data.startswith("category:"), StateFilter(Form.waiting_for_category_choice))
+@router.callback_query(F.data.startswith("category:"), 
+                       StateFilter(Form.waiting_for_category_choice, Form.waiting_for_new_category_confirmation))
 async def process_category_choice(callback: CallbackQuery, state: FSMContext):
     category = callback.data.split(":", 1)[1]
     data = await state.get_data()
@@ -387,11 +392,14 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
         table = await get_table(callback.from_user.id, callback.from_user.username)
     sheet = table.worksheet(SHEET_NAME)
     sheet.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
+    # phrase = random.choice(categories.SUPPORT_PHRASES)
+    phrase = pick_phrase(date_str, category, amount, comment, table)
     await callback.message.answer(categories.ADDED_SUCCESSFULLY.format(
         category=category,
         amount=amount,
         date=date_str,
-        comment=comment
+        comment=comment,
+        phrase=phrase
     ))
     await state.clear()
     rows = get_all_rows(table)

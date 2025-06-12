@@ -2,12 +2,14 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from lexicon import buttons
 from config_data.config import N_ROW_TEXT
 
-def add_or_rewrite_keyboard() -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+def add_or_rewrite_keyboard(categories: list[str] = []) -> InlineKeyboardMarkup:
+    keyboard_buttons=[
         [InlineKeyboardButton(text=buttons.ADD_CATEGORY, callback_data="add_category")],
         [InlineKeyboardButton(text=buttons.REWRITE_MESSAGE, callback_data="rewrite_message")]
-    ])
-    return keyboard
+    ]
+    for cat in categories:
+        keyboard_buttons.append([InlineKeyboardButton(text=cat, callback_data=f"category:{cat}")])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
 
 def category_selection_keyboard(categories: list[str]) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup(inline_keyboard=[

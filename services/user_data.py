@@ -2,6 +2,7 @@ from config_data.config import SHEET_NAME, SHEET_CATEGORIES_NAME, TABLE_NAME, AD
 import asyncpg
 import asyncio
 from config_data.config import client
+from rapidfuzz import process, fuzz
 
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
@@ -36,14 +37,18 @@ def get_user_categories(table):
     except Exception as e:
         return []
 
+def find_closest_category(category:str, table) -> list[str]:
+    all_cats = get_user_categories(table)
+    matches = process.extract(category, all_cats, scorer=fuzz.partial_ratio, processor=str.lower, score_cutoff=70)
+    matches = [cat[0] for cat in matches]
+    return matches
+
 def find_categories_for_user(partial, table):
     all_cats = get_user_categories(table)
     return [cat for cat in all_cats if partial.lower() in cat.lower()]
 
 def get_all_rows(table):
-    # Открываем таблицу по имени или id
     sheet = table.worksheet(SHEET_NAME)
-    # Получаем все строки
     rows = sheet.get_all_values()
     return rows
 
@@ -63,5 +68,5 @@ def delete_row_if_empty_after_clear(table, index: int):
     # Проверить, осталась ли строка пустой
     if all(cell.strip() == "" for cell in values):
         sheet.delete_rows(index + 1)
-        return True  # Удалена
-    return False  # Не удалена
+        return True
+    return False
