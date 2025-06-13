@@ -14,3 +14,8 @@ CLOSE_VIEW = "❌ Закрыть"
 CONFIRM_DELETE = "✅ Да, удалить"
 
 BACK = "🔄 Вернуться"
+
+USUAL_EXPENSE = "🧾 Обычные траты"
+TRAVEL_EXPENSE = "✈️ Путешествие"
+
+MODES = {USUAL_EXPENSE: 'normal', TRAVEL_EXPENSE: 'travel'}

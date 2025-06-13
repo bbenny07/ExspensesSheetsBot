@@ -11,7 +11,8 @@ from keyboards.main_menu import set_main_menu
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 from keep_alive import keep_alive
-keep_alive()
+from data_base import init_db
+# keep_alive()
 
 bot = Bot(
     token=TELEGRAM_TOKEN,
@@ -33,6 +34,7 @@ async def main():
     logging.basicConfig(level=logging.INFO)
     await set_bot_description(bot)
     await set_main_menu(bot)
+    await init_db()
     await bot.delete_webhook(drop_pending_updates=False)
     await dp.start_polling(bot)
 
