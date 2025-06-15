@@ -128,7 +128,8 @@ async def start_current_travel_mode(callback: CallbackQuery):
     text += messages.CURRENT_TRAVEL.format(name=current_travel)
     travels = await data_base.get_active_travels(callback.from_user.id)
     keyboard = get_choose_travel_keyboard(travels, current_travel)
-    await callback.message.edit_text(text, reply_markup=keyboard)
+    if callback.message.text != text:
+        await callback.message.edit_text(text, reply_markup=keyboard)
 
 @router.message(Command('categories'))
 async def show_categories(message: Message, state: FSMContext):
