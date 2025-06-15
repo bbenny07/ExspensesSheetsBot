@@ -7,7 +7,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
-SHEET_NAME='Траты'
+SHEET_NAME={'normal':'Траты', 'travel': 'Путешествия'}
 SHEET_CATEGORIES_NAME = 'Категории'
 TABLE_NAME='Мои траты'
 
@@ -35,4 +35,4 @@ client = gspread.authorize(creds)
 
 EMAIL_AGENT = os.getenv('EMAIL_AGENT')
 N_ROW_TEXT = 3
-N_COLUMN = 4
+N_COLUMN = 5

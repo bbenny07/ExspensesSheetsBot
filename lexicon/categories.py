@@ -226,7 +226,7 @@ CATEGORY_NOT_FOUND = (
     "• 🔁 Переписать категорию вручную\n"
     "• ➕ Добавить новую категорию"
 )
-ADDED_SUCCESSFULLY = "✅ Добавлено:\n{date} | {category} | {amount} EUR | {comment}\n\n{phrase}"
+ADDED_SUCCESSFULLY = "✅ Добавлено:\n{current_row}\n\n{phrase}"
 
 MULTIPLE_CATEGORIES = "Найдено несколько категорий, выберите нужную:"
 CATEGORY_ADDED = "📌Категория '{category}' добавлена и запись сохранена!\n\n{date} | {category} | {amount} EUR | {comment}"

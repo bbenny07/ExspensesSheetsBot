@@ -13,3 +13,6 @@ class EditRowState(StatesGroup):
     waiting_for_edit_row = State()
     waiting_for_edit_category_confirmation = State()
     waiting_for_edit_category_choice = State()
+
+class TravelState(StatesGroup):
+    waiting_for_new_travel = State()

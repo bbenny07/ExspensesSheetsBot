@@ -74,3 +74,42 @@ def get_row_edit_cancel_keyboard(index: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text=buttons.CANCEL, callback_data="cancel_edit_{index}")]
     ])
+
+def get_choose_travel_keyboard(travels: list[str], current_travel: str) -> InlineKeyboardMarkup:
+    butts = [[InlineKeyboardButton(text=travel, callback_data=f"travel:{travel}")] for travel in travels]
+    if current_travel:
+        butts.append(
+            [InlineKeyboardButton(text=buttons.END_CURRENT_TRAVEL, callback_data=f"clear_travel:{current_travel}")]
+        )
+    butts.append(
+        [InlineKeyboardButton(text=buttons.EXIT_TRAVEL_MODE, callback_data=f"exit_travel_mode")]
+    )
+    butts.append(
+        [InlineKeyboardButton(text=buttons.ADD_TRAVEL, callback_data=f"new_travel")]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=butts)
+
+def get_enter_new_travel_keyboard() -> InlineKeyboardMarkup:
+    butts = []
+    butts.append([InlineKeyboardButton(text=buttons.EXIT_TRAVEL_MODE, callback_data=f"exit_travel_mode")])
+    butts.append([InlineKeyboardButton(text=buttons.CANCEL_TRAVEL_INPUT, callback_data=f"travel_mode")])
+
+    return InlineKeyboardMarkup(inline_keyboard=butts)
+
+def get_travel_mode_keyboard(current_travel: str) -> InlineKeyboardMarkup:
+    butts = []
+    butts.append([InlineKeyboardButton(text=buttons.EXIT_TRAVEL_MODE, callback_data=f"exit_travel_mode")])
+    if current_travel:
+        butts.append(
+            [InlineKeyboardButton(text=buttons.END_CURRENT_TRAVEL, callback_data=f"clear_travel:{current_travel}")]
+            )
+
+    return InlineKeyboardMarkup(inline_keyboard=butts)
+
+def get_delete_travel_confirmation_keyboard(current_travel: str)-> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=buttons.CONFIRM_DELETE, callback_data=f"confirm_delete_travel:{current_travel}"),
+            InlineKeyboardButton(text=buttons.CANCEL, callback_data=f"cancel_delete_travel:{current_travel}")
+        ]
+    ])

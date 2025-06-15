@@ -67,7 +67,7 @@ REWRITE_MESSAGE = "✍️ Введите сообщение ещё раз."
 DELETE_ROW_CANCELLED = "❌ Удаление отменено. Запись осталась без изменений."
 CONFIRM_DELETE_ROW_MESSAGE = "⚠️ Вы точно хотите удалить строку {index}:\n{current_row}?"
 ROW_DELETE_SUCCESS_MESSAGE = "✅ Удалена строка {index}:\n{current_row}"
-PART_ROW_DELETE_SUCCESS_MESSAGE = "✅ В строке {index} :\n{current_row}\n\nудалены первые 4 ячейки."
+PART_ROW_DELETE_SUCCESS_MESSAGE = "✅ В строке {index} :\n{current_row}\n\nудалены первые 5 ячеек."
 FAILED_TO_OPEN_ROW = (
     "⚠️ Выбранной строки больше нет.\n"
     "📋 Вы можете посмотреть последние записи в таблице, отредактировать или удалить их.\n\n"
@@ -84,3 +84,22 @@ EDIT_ROW_SUCCESSFULLY = "✅ Изменения сохранены!\n\n🔎 Но
 FAILED_TO_DELETE_MESSAGE = (
     "Не удалось закрыть сообщение.🤷‍♂️"
 )
+
+TRAVEL_MODE_ENTERED = "🚗 Сейчас вы в режиме *Путешествия*."
+TRAVEL_NOT_SELECTED = (
+    "Путешествие ещё не выбрано.\n"
+    "Вы можете выбрать одно из существующих или создать новое."
+)
+CURRENT_TRAVEL = "Текущее путешествие: *{name}*"
+
+TRAVEL_ENDED = "📌 Путешествие *{name}* завершено и больше не активно."
+NO_ACTIVE_TRAVEL = "⚠️ У вас не выбрано текущее путешествие."
+
+CHOOSE_TRAVEL_PROMPT = "Выберите одно из путешествий ниже или создайте новое."
+TRAVEL_ADDED = "✅ Путешествие *{name}* добавлено и установлено как текущее."
+TRAVEL_SWITCHED = "🔄 Переключено на путешествие: *{name}*"
+
+EXITED_TRAVEL_MODE = "🔙 Режим путешествий завершён. Теперь вы в обычном режиме учёта трат."
+USUAL_EXPENSE_MODE = "Теперь вы в обычном режиме учёта трат."
+ENTER_NEW_TRAVEL_TEXT = "✏️ Введите название нового путешествия:"
+CONFIRM_DELETE_TRAVEL = "⚠️ Вы точно хотите завершить путешествие:\n{name}?"

@@ -3,7 +3,12 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 from services.user_data import get_or_create_name_user_file, find_closest_category, find_categories_for_user, get_user_categories, get_all_rows, edit_row_in_table, delete_row_if_empty_after_clear
-from keyboards.inline_keyboards import  get_row_edit_cancel_keyboard, get_cancelled_action_keyboard, category_selection_keyboard, add_or_rewrite_keyboard, get_feedback_menu_keyboard, get_cancel_feedback_keyboard, get_row_navigation_keyboard, get_delete_confirmation_keyboard
+from keyboards.inline_keyboards import  (
+    get_travel_mode_keyboard, get_delete_travel_confirmation_keyboard,
+    get_enter_new_travel_keyboard, get_choose_travel_keyboard, get_row_edit_cancel_keyboard,
+    get_cancelled_action_keyboard, category_selection_keyboard, add_or_rewrite_keyboard, 
+    get_feedback_menu_keyboard, get_cancel_feedback_keyboard, get_row_navigation_keyboard, 
+    get_delete_confirmation_keyboard)
 from keyboards.main_menu import get_main_menu_keybord
 from lexicon import messages, categories, commands, buttons
 from config_data.config import SHEET_NAME, SHEET_CATEGORIES_NAME, ADMIN_UID, EMAIL_AGENT
@@ -23,7 +28,7 @@ async def get_table(user_id: int, username: str):
     return table
 
 def format_row(row: list) -> str:
-    return " | ".join(f"{cell}" for cell in row[:4])
+    return " | ".join(f"{cell}" for cell in row[:N_COLUMN])
 
 @router.message(CommandStart())
 async def start(message: Message, state: FSMContext):
@@ -32,14 +37,98 @@ async def start(message: Message, state: FSMContext):
     await message.answer(messages.START.format(table_name=table_name, email=EMAIL_AGENT), reply_markup=keyboard)
 
 @router.message(F.text == buttons.TRAVEL_EXPENSE)
-async def change_mod(message: Message):
+async def change_mode_travel(message: Message):
     await data_base.set_user_mode(message.from_user.id, mode=buttons.MODES[message.text])
+    text = messages.TRAVEL_MODE_ENTERED + "\n\n"
+    current_travel = await data_base.get_current_travel(message.from_user.id)
+    travels = await data_base.get_active_travels(message.from_user.id)
+    if current_travel:
+        text += messages.CURRENT_TRAVEL.format(name=current_travel)
+    else:
+        text += messages.TRAVEL_NOT_SELECTED
+
+    keyboard = get_choose_travel_keyboard(travels, current_travel)
+    await message.answer(text, reply_markup=keyboard)
+
+@router.message(StateFilter(TravelState.waiting_for_new_travel))
+async def add_new_travel(message: Message, state: FSMContext):
+    await state.clear()
+    new_acive_travel = message.text
+    await data_base.add_travel(message.from_user.id, new_acive_travel)
+    await data_base.set_current_travel(message.from_user.id, new_acive_travel)
+    keyboard = get_travel_mode_keyboard(new_acive_travel)
+    await message.answer(text=messages.TRAVEL_ADDED.format(name=new_acive_travel), reply_markup=keyboard)
 
 @router.message(F.text == buttons.USUAL_EXPENSE)
-async def change_mod(message: Message):
+async def change_mode_usual(message: Message):
     await data_base.set_user_mode(message.from_user.id, mode=buttons.MODES[message.text])
+    await message.answer(text=messages.USUAL_EXPENSE_MODE)
 
+@router.callback_query(F.data == 'new_travel')
+async def add_new_travel(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(TravelState.waiting_for_new_travel)
+    text = messages.TRAVEL_MODE_ENTERED + "\n\n"
+    text += messages.ENTER_NEW_TRAVEL_TEXT
+    await callback.message.edit_text(text=text, keyboard=get_enter_new_travel_keyboard())
 
+@router.callback_query(F.data == 'travel_mode')
+async def add_new_travel(callback: CallbackQuery, state: FSMContext):    
+    await data_base.set_user_mode(callback.from_user.id, mode=buttons.MODES[callback.message.text])
+    text = messages.TRAVEL_MODE_ENTERED + "\n\n"
+    current_travel = await data_base.get_current_travel(callback.from_user.id)
+    travels = await data_base.get_active_travels(callback.from_user.id)
+    if current_travel:
+        text += messages.CURRENT_TRAVEL.format(name=current_travel)
+    else:
+        text += messages.TRAVEL_NOT_SELECTED
+
+    keyboard = get_choose_travel_keyboard(travels, current_travel)
+    await callback.message.edit_text(text, reply_markup=keyboard)
+    # await state.clear()
+
+@router.callback_query(F.data == 'exit_travel_mode')
+async def exit_travel_mode(callback: CallbackQuery, state: FSMContext):
+    await data_base.set_user_mode(callback.from_user.id)
+    await callback.message.answer(messages.EXITED_TRAVEL_MODE)
+    # await state.clear()
+    await callback.answer()
+
+@router.callback_query(F.data.startswith("clear_travel:"))
+async def end_active_travel(callback: CallbackQuery):
+    current_travel = callback.data.split(':')[1]
+    keyboard = get_delete_travel_confirmation_keyboard(current_travel)
+    text = messages.CONFIRM_DELETE_TRAVEL.format(name=current_travel)
+    await callback.message.edit_text(text=text, reply_markup=keyboard)
+
+@router.callback_query(F.data.startswith("confirm_delete_travel:"))
+async def delete_active_travel(callback: CallbackQuery):
+    current_travel = callback.data.split(':')[1]
+    text = messages.TRAVEL_ENDED.format(name=current_travel)
+    await data_base.end_travel(callback.from_user.id, current_travel)
+    await data_base.clear_current_travel(callback.from_user.id)
+    travels = await data_base.get_active_travels(callback.from_user.id)
+    text = "\n\n" + messages.TRAVEL_MODE_ENTERED + "\n\n" + messages.TRAVEL_NOT_SELECTED
+    keyboard = get_choose_travel_keyboard(travels, current_travel)
+    await callback.message.edit_text(text, reply_markup=keyboard)
+
+@router.callback_query(F.data.startswith("cancel_delete_travel:"))
+async def cancel_delete_active_travel(callback: CallbackQuery):
+    text = messages.TRAVEL_MODE_ENTERED + "\n\n"
+    current_travel = callback.data.split(':')[1]
+    travels = await data_base.get_active_travels(callback.from_user.id)
+    text += messages.CURRENT_TRAVEL.format(name=current_travel)
+    keyboard = get_choose_travel_keyboard(travels, current_travel)
+    await callback.message.edit_text(text=text, reply_markup=keyboard)
+
+@router.callback_query(F.data.startswith("travel:"))
+async def start_current_travel_mode(callback: CallbackQuery):
+    current_travel = callback.data.split(':')[1]
+    await data_base.set_current_travel(callback.from_user.id, current_travel)
+    text = messages.TRAVEL_MODE_ENTERED + "\n\n"
+    text += messages.CURRENT_TRAVEL.format(name=current_travel)
+    travels = await data_base.get_active_travels(callback.from_user.id)
+    keyboard = get_choose_travel_keyboard(travels, current_travel)
+    await callback.message.edit_text(text, reply_markup=keyboard)
 
 @router.message(Command('categories'))
 async def show_categories(message: Message, state: FSMContext):
@@ -63,7 +152,7 @@ async def show_table(message: Message, state: FSMContext):
     if table is None:
         table = await get_table(message.from_user.id, message.from_user.username)
         await state.update_data(table=table)
-    rows = get_all_rows(table)
+    rows = await get_all_rows(table, message.from_user.id)
     current_row = rows[-1][:N_COLUMN]
     total_rows = len(rows)
     current_index = total_rows - 1
@@ -79,11 +168,11 @@ async def show_table_back(callback: CallbackQuery, state: FSMContext):
     if table is None:
         table = await get_table(callback.from_user.id, callback.from_user.username)
         await state.update_data(table=table)
-    rows = get_all_rows(table)
+    rows = await get_all_rows(table, callback.from_user.id)
     index = min(index, len(rows) - 1)
     current_row = rows[index][:N_COLUMN]
     total_rows = len(rows)
-    await state.up_date(rows=rows)
+    await state.update_data(rows=rows)
     await callback.message.edit_text(messages.CURRENT_ROW.format(index=index+1,current_row=format_row(current_row)),
                          reply_markup=get_row_navigation_keyboard(index, total_rows))
 
@@ -95,7 +184,7 @@ async def confirm_delete_prompt(callback: CallbackQuery, state:FSMContext):
     if table is None:
         table = await get_table(callback.from_user.id, callback.from_user.username)
         await state.update_data(table=table)
-    rows = get_all_rows(table)
+    rows = await get_all_rows(table, callback.from_user.id)
     total_rows = len(rows)
     if index > total_rows - 1:
         current_row = rows[-1][:N_COLUMN]
@@ -118,7 +207,7 @@ async def confirm_delete(callback: CallbackQuery, state: FSMContext):
     if table is None:
         table = await get_table(callback.from_user.id, callback.from_user.username)
         await state.update_data(table=table)
-    rows = get_all_rows(table)
+    rows = await get_all_rows(table, callback.from_user.id)
     total_rows = len(rows)
     if index > total_rows - 1:
         current_row = rows[-1][:N_COLUMN]
@@ -128,7 +217,7 @@ async def confirm_delete(callback: CallbackQuery, state: FSMContext):
         )
         return
     current_row = rows[index][:N_COLUMN]
-    if delete_row_if_empty_after_clear(table, index):
+    if await delete_row_if_empty_after_clear(table, index, callback.from_user.id):
         text = messages.ROW_DELETE_SUCCESS_MESSAGE.format(index=index+1, current_row=format_row(current_row))
     else:
         text = messages.PART_ROW_DELETE_SUCCESS_MESSAGE.format(index=index+1, current_row=format_row(current_row))
@@ -136,7 +225,7 @@ async def confirm_delete(callback: CallbackQuery, state: FSMContext):
         text=text,
         reply_markup=get_row_navigation_keyboard(index, len(rows))
     )
-    rows = get_all_rows(table)
+    rows = await get_all_rows(table, callback.from_user.id)
     await state.update_data(rows=rows)
 
 @router.callback_query(F.data.startswith("cancel_delete_"))
@@ -152,7 +241,7 @@ async def edit_rows(callback: CallbackQuery, state: FSMContext):
         table = await get_table(callback.from_user.id, callback.from_user.username)
         await state.update_data(table=table)
     index = int(callback.data.split("_")[1])
-    rows = get_all_rows(table)
+    rows = await get_all_rows(table, callback.from_user.id)
     total_rows = len(rows)
     if index > total_rows - 1:
         current_row = rows[-1][:N_COLUMN]
@@ -161,7 +250,7 @@ async def edit_rows(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_row_navigation_keyboard(total_rows - 1, total_rows)
         )
         return
-    current_row = rows[index][:N_COLUMN]
+    current_row = rows[index][:(N_COLUMN- 1)]
     await state.update_data(index=index, table=table, current_row=current_row)
     await callback.message.answer(
         text=messages.EDIT_ROW_PROMPT.format(index=index+1, current_row=" ".join(current_row)),
@@ -213,7 +302,7 @@ async def handle_full_row_edit(message: Message, state: FSMContext):
         if len(matches) == 1:
             category = matches[0]
             new_row = [date_str, category, amount, comment]
-            edit_row_in_table(table, new_row, index)
+            await edit_row_in_table(table, new_row, index, message.from_user.id)
             await message.answer(messages.EDIT_ROW_SUCCESSFULLY.format(current_row=format_row(new_row)), 
                                  reply_markup=get_cancelled_action_keyboard(index))
         else:
@@ -251,7 +340,7 @@ async def process_edit_category_choice(callback: CallbackQuery, state: FSMContex
 
     table = data.get('table')
     new_row = [date_str, category, amount, comment]
-    edit_row_in_table(table, new_row, index)
+    await edit_row_in_table(table, new_row, index, callback.from_user.id)
     await callback.message.answer(messages.EDIT_ROW_SUCCESSFULLY.format(current_row=format_row(new_row)),
                                   reply_markup=get_cancelled_action_keyboard(index))
     await state.clear()
@@ -267,7 +356,7 @@ async def navigate_rows(callback: CallbackQuery, state: FSMContext):
         table = data.get('table')
         if table is None:
             table = await get_table(callback.from_user.id, callback.from_user.username)
-        rows = get_all_rows(table)
+        rows = await get_all_rows(table, callback.from_user.id)
         await state.update_data(rows=rows, table=table)
     if callback.data.startswith("next_"):
         index = min(index + 1, len(rows) - 1)
@@ -319,7 +408,10 @@ async def handle_expense(message: Message, state: FSMContext):
     table = data.get('table')
     if table is None:
         table = await get_table(message.from_user.id, message.from_user.username)
-    sheet = table.worksheet(SHEET_NAME)
+    mode = await data_base.get_user_mode(message.from_user.id) 
+    mode = mode if mode else 'normal'
+    current_travel = await data_base.get_current_travel(message.from_user.id) if mode == "travel" else ""
+    sheet = table.worksheet(SHEET_NAME[mode])
     try:
         date_str, category, amount, comment = parse_message(message.text.strip(), message.date)
         matches = find_categories_for_user(category, table)
@@ -337,17 +429,15 @@ async def handle_expense(message: Message, state: FSMContext):
 
         if len(matches) == 1:
             category = matches[0]
-            sheet.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
+            sheet.append_row([date_str, category, amount, comment, current_travel], value_input_option="USER_ENTERED")
             # phrase = random.choice(categories.SUPPORT_PHRASES)
             phrase = pick_phrase(date_str, category, amount, comment, table)
+            reply_kb = get_travel_mode_keyboard(current_travel) if mode == "travel" else None
             await message.answer(categories.ADDED_SUCCESSFULLY.format(
-                category=category,
-                amount=amount,
-                date=date_str,
-                comment=comment,
+                current_row=format_row([date_str, category, amount, comment, current_travel]),
                 phrase=phrase
-            ))
-            rows = get_all_rows(table)
+            ), reply_markup=reply_kb)
+            rows = await get_all_rows(table, message.from_user.id)
             await state.update_data(rows=rows)
         else:
             keyboard = category_selection_keyboard(matches)
@@ -357,6 +447,7 @@ async def handle_expense(message: Message, state: FSMContext):
 
     except Exception as e:
         await message.answer(messages.INVALID_FORMAT)
+  
 
 @router.callback_query(F.data == "add_category", StateFilter(Form.waiting_for_new_category_confirmation))
 async def add_new_category(callback: CallbackQuery, state: FSMContext):
@@ -368,7 +459,11 @@ async def add_new_category(callback: CallbackQuery, state: FSMContext):
     try:
         cat_sheet = table.worksheet(SHEET_CATEGORIES_NAME)
         cat_sheet.append_row([data["category"]])
-        table.worksheet(SHEET_NAME).append_row([data["date_str"], data["category"], data["amount"], data["comment"]])
+        mode = await data_base.get_user_mode(callback.from_user.id) 
+        mode = mode if mode else 'normal'
+        current_travel = await data_base.get_current_travel(callback.from_user.id) if mode == "travel" else ""
+        sheet = table.worksheet(SHEET_NAME[mode])
+        sheet.append_row([data["date_str"], data["category"], data["amount"], data["comment"], current_travel])
         await callback.message.answer(categories.CATEGORY_ADDED.format(category=data["category"], 
                                                                        date=data["date_str"], 
                                                                        amount=data["amount"], comment=data["comment"]))
@@ -376,7 +471,7 @@ async def add_new_category(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer(categories.CATEGORY_ADDED_ERROR.format(error=e))
     
     await state.clear()
-    rows = get_all_rows(table)
+    rows = await get_all_rows(table, callback.from_user.id)
     await state.update_data(rows=rows)
     await callback.answer()
 
@@ -403,19 +498,20 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
     table = data.get('table')
     if table is None:
         table = await get_table(callback.from_user.id, callback.from_user.username)
-    sheet = table.worksheet(SHEET_NAME)
-    sheet.append_row([date_str, category, amount, comment], value_input_option="USER_ENTERED")
+    mode = await data_base.get_user_mode(callback.from_user.id)
+    mode = mode if mode else 'normal'
+    current_travel = await data_base.get_current_travel(callback.from_user.id) if mode == "travel" else ""
+    sheet = table.worksheet(SHEET_NAME[mode])
+    sheet.append_row([date_str, category, amount, comment, current_travel], value_input_option="USER_ENTERED")
     # phrase = random.choice(categories.SUPPORT_PHRASES)
     phrase = pick_phrase(date_str, category, amount, comment, table)
+    reply_kb = get_travel_mode_keyboard(current_travel) if mode == "travel" else None
     await callback.message.answer(categories.ADDED_SUCCESSFULLY.format(
-        category=category,
-        amount=amount,
-        date=date_str,
-        comment=comment,
+        current_row=format_row([date_str, category, amount, comment, current_travel]),
         phrase=phrase
-    ))
+    ), reply_markup=reply_kb)
     await state.clear()
-    rows = get_all_rows(table)
+    rows = await get_all_rows(table, callback.from_user.id)
     await state.update_data(rows=rows)
     await callback.answer() 
 
