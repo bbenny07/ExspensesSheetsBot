@@ -130,6 +130,8 @@ async def start_current_travel_mode(callback: CallbackQuery):
     keyboard = get_choose_travel_keyboard(travels, current_travel)
     if callback.message.text != text:
         await callback.message.edit_text(text, reply_markup=keyboard)
+    else:
+        await callback.answer()
 
 @router.message(Command('categories'))
 async def show_categories(message: Message, state: FSMContext):
@@ -433,11 +435,11 @@ async def handle_expense(message: Message, state: FSMContext):
             sheet.append_row([date_str, category, amount, comment, current_travel], value_input_option="USER_ENTERED")
             # phrase = random.choice(categories.SUPPORT_PHRASES)
             phrase = pick_phrase(date_str, category, amount, comment, table)
-            reply_kb = get_travel_mode_keyboard(current_travel) if mode == "travel" else None
+            # reply_kb = get_travel_mode_keyboard(current_travel) if mode == "travel" else None
             await message.answer(categories.ADDED_SUCCESSFULLY.format(
                 current_row=format_row([date_str, category, amount, comment, current_travel]),
                 phrase=phrase
-            ), reply_markup=reply_kb)
+            ))
             rows = await get_all_rows(table, message.from_user.id)
             await state.update_data(rows=rows)
         else:
@@ -506,11 +508,11 @@ async def process_category_choice(callback: CallbackQuery, state: FSMContext):
     sheet.append_row([date_str, category, amount, comment, current_travel], value_input_option="USER_ENTERED")
     # phrase = random.choice(categories.SUPPORT_PHRASES)
     phrase = pick_phrase(date_str, category, amount, comment, table)
-    reply_kb = get_travel_mode_keyboard(current_travel) if mode == "travel" else None
+    # reply_kb = get_travel_mode_keyboard(current_travel) if mode == "travel" else None
     await callback.message.answer(categories.ADDED_SUCCESSFULLY.format(
         current_row=format_row([date_str, category, amount, comment, current_travel]),
         phrase=phrase
-    ), reply_markup=reply_kb)
+    ))
     await state.clear()
     rows = await get_all_rows(table, callback.from_user.id)
     await state.update_data(rows=rows)
