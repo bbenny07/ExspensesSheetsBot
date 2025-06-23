@@ -4,6 +4,7 @@ import asyncio
 from config_data.config import client
 from rapidfuzz import process, fuzz
 import data_base
+from sentence_transformers import SentenceTransformer, util
 
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
@@ -38,10 +39,24 @@ def get_user_categories(table):
     except Exception as e:
         return []
 
+def find_similar_category(category:str, all_categories: list[str]) -> list[str]:
+    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2') 
+
+    input_embedding = model.encode(category, convert_to_tensor=True)
+    category_embeddings = model.encode(all_categories, convert_to_tensor=True)
+    cosine_scores = util.pytorch_cos_sim(input_embedding, category_embeddings)[0]
+
+    # best_score = float(cosine_scores.max())
+    best_index = int(cosine_scores.argmax())
+    best_match = all_categories[best_index]
+    return best_match
+
 def find_closest_category(category:str, table) -> list[str]:
     all_cats = get_user_categories(table)
     matches = process.extract(category, all_cats, scorer=fuzz.partial_ratio, processor=str.lower, score_cutoff=70)
     matches = [cat[0] for cat in matches]
+    if not matches:
+        matches.append(find_similar_category(category, all_cats))
     return matches
 
 def find_categories_for_user(partial, table):
@@ -77,3 +92,4 @@ async def delete_row_if_empty_after_clear(table, index: int, user_id: int):
         sheet.delete_rows(index + 1)
         return True
     return False
+
