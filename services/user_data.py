@@ -39,16 +39,22 @@ def get_user_categories(table):
     except Exception as e:
         return []
 
-model = SentenceTransformer("cointegrated/LaBSE-en-ru")
+model = SentenceTransformer("intfloat/multilingual-e5-base")
 
-def find_similar_category(category:str, all_categories: list[str]) -> list[str]:
-    input_embedding = model.encode(category, convert_to_tensor=True)
-    category_embeddings = model.encode(all_categories, convert_to_tensor=True)
+def encode_e5(texts: list[str], is_query: bool = False):
+    prefix = "query: " if is_query else "passage: "
+    return model.encode([prefix + t.lower() for t in texts], convert_to_tensor=True)
+
+def find_similar_category(category: str, all_categories: list[str], top_k: int = 3) -> list[str]:
+    if not all_categories:
+        return []
+
+    input_embedding = encode_e5([category], is_query=True)
+    category_embeddings = encode_e5(all_categories, is_query=False)
+
     cosine_scores = util.pytorch_cos_sim(input_embedding, category_embeddings)[0]
-
-    top_indices = cosine_scores.topk(k=3).indices.tolist()
-    top_matches = [all_categories[i] for i in top_indices]
-    return top_matches
+    top_indices = cosine_scores.topk(k=min(top_k, len(all_categories))).indices.tolist()
+    return [all_categories[i] for i in top_indices]
 
 def find_closest_category(category:str, table) -> list[str]:
     all_cats = get_user_categories(table)
