@@ -39,25 +39,23 @@ def get_user_categories(table):
     except Exception as e:
         return []
 
-def find_similar_category(category:str, all_categories: list[str]) -> list[str]:
-    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2') 
+model = SentenceTransformer("ai-forever/sbert_large_nlu_ru")
 
+def find_similar_category(category:str, all_categories: list[str]) -> list[str]:
     input_embedding = model.encode(category, convert_to_tensor=True)
     category_embeddings = model.encode(all_categories, convert_to_tensor=True)
     cosine_scores = util.pytorch_cos_sim(input_embedding, category_embeddings)[0]
 
-    # best_score = float(cosine_scores.max())
-    best_index = int(cosine_scores.argmax())
-    best_match = all_categories[best_index]
-    return best_match
+    top_indices = cosine_scores.topk(k=3).indices.tolist()
+    top_matches = [all_categories[i] for i in top_indices]
+    return top_matches
 
 def find_closest_category(category:str, table) -> list[str]:
     all_cats = get_user_categories(table)
     matches = process.extract(category, all_cats, scorer=fuzz.partial_ratio, processor=str.lower, score_cutoff=70)
     matches = [cat[0] for cat in matches]
-    if not matches:
-        matches.append(find_similar_category(category, all_cats))
-    return matches
+    matches.extend(find_similar_category(category, all_cats))
+    return list(set(matches))
 
 def find_categories_for_user(partial, table):
     all_cats = get_user_categories(table)

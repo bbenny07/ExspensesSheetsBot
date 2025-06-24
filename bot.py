@@ -12,7 +12,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 from keep_alive import keep_alive
 from data_base import init_db
-keep_alive()
+# keep_alive()
 
 bot = Bot(
     token=TELEGRAM_TOKEN,
