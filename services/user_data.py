@@ -4,7 +4,7 @@ import asyncio
 from config_data.config import client
 from rapidfuzz import process, fuzz
 import data_base
-from sentence_transformers import SentenceTransformer, util
+# from sentence_transformers import SentenceTransformer, util
 
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
