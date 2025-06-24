@@ -15,6 +15,7 @@ ADMIN_UID = os.getenv('ADMIN_UID')
 ADMINS_UID = os.getenv("ADMINS_UID", "").split(",")
 DATABASE_URL = os.getenv('DATABASE_URL')
 DB_CONFIG = os.getenv('DB_CONFIG')
+API_KEY = os.getenv('API_KEY')
 
 GSCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 

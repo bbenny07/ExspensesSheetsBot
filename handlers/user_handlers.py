@@ -294,7 +294,7 @@ async def handle_full_row_edit(message: Message, state: FSMContext):
         matches = find_categories_for_user(category, table)
         if not matches:
             await state.update_data(date_str=date_str, category=category, amount=amount, comment=comment)
-            close_matches = find_closest_category(category, table)
+            close_matches = await find_closest_category(category, table)
             keyboard = add_or_rewrite_keyboard(categories=close_matches)
             await message.answer(
                 categories.CATEGORY_NOT_FOUND.format(category=category),
@@ -421,7 +421,7 @@ async def handle_expense(message: Message, state: FSMContext):
 
         if not matches:
             await state.update_data(date_str=date_str, category=category, amount=amount, comment=comment)
-            close_matches = find_closest_category(category, table)
+            close_matches = await find_closest_category(category, table)
             keyboard = add_or_rewrite_keyboard(categories=close_matches)
             await message.answer(
                 categories.CATEGORY_NOT_FOUND.format(category=category),

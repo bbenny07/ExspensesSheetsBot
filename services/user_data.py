@@ -1,10 +1,10 @@
-from config_data.config import SHEET_NAME, SHEET_CATEGORIES_NAME, TABLE_NAME, ADMINS_UID, DATABASE_URL
+from config_data.config import SHEET_NAME, SHEET_CATEGORIES_NAME, TABLE_NAME, ADMINS_UID, DATABASE_URL, API_KEY
 import asyncpg
-import asyncio
-from config_data.config import client
 from rapidfuzz import process, fuzz
 import data_base
 # from sentence_transformers import SentenceTransformer, util
+import google.generativeai as genai
+import time
 
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
@@ -39,6 +39,24 @@ def get_user_categories(table):
     except Exception as e:
         return []
 
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel("models/gemini-1.5-flash")
+
+async def get_ai_reponse(promt: str) -> list[str]:
+    # time.sleep(1)
+    response = await model.generate_content_async(promt)
+    return response.text.strip()
+
+async def find_similar_category(category: str, all_categories: list[str]) -> list[str]:
+    all = ','.join(all_categories)
+    promt = f'''
+    Пользователь написал {category} для своей траты. Но такой именно категории нет, проверь есть ли подходящие по смыслу.
+    Например ресторан, бар, мак, макдональдс, рестик, еда навынос могут подойти к существующей категории Кафе
+    Нужно выбрать одну или несколько из существующих категорий из {all}. Напиши подходящие по смыслу категории через запятую
+    '''
+    response = await get_ai_reponse(promt=promt)
+    return response.split(',')
+
 # model = SentenceTransformer("intfloat/multilingual-e5-base")
 
 # def encode_e5(texts: list[str], is_query: bool = False):
@@ -56,11 +74,11 @@ def get_user_categories(table):
 #     top_indices = cosine_scores.topk(k=min(top_k, len(all_categories))).indices.tolist()
 #     return [all_categories[i] for i in top_indices]
 
-def find_closest_category(category:str, table) -> list[str]:
+async def find_closest_category(category:str, table) -> list[str]:
     all_cats = get_user_categories(table)
     matches = process.extract(category, all_cats, scorer=fuzz.partial_ratio, processor=str.lower, score_cutoff=70)
     matches = [cat[0] for cat in matches]
-    # matches.extend(find_similar_category(category, all_cats))
+    matches.extend(await find_similar_category(category, all_cats))
     return list(set(matches))
 
 def find_categories_for_user(partial, table):
