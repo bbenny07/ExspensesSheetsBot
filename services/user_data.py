@@ -39,7 +39,7 @@ def get_user_categories(table):
     except Exception as e:
         return []
 
-model = SentenceTransformer("ai-forever/sbert_large_nlu_ru")
+model = SentenceTransformer("cointegrated/LaBSE-en-ru")
 
 def find_similar_category(category:str, all_categories: list[str]) -> list[str]:
     input_embedding = model.encode(category, convert_to_tensor=True)
