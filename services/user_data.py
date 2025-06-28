@@ -7,7 +7,8 @@ import google.generativeai as genai
 import time
 
 async def get_db_connection():
-    return await asyncpg.connect(DATABASE_URL)
+    conn = await asyncpg.connect(DATABASE_URL)
+    return conn
 
 async def get_or_create_name_user_file(user_id: int, username: str) -> str:
     uid = str(user_id)

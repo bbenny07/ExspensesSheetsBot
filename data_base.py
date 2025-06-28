@@ -10,7 +10,7 @@ async def get_db():
 
 async def init_db():
     conn = await get_db()
-
+    await conn.execute('SET search_path TO public;')
     await conn.execute("""
         CREATE TABLE IF NOT EXISTS travels (
                        id SERIAL PRIMARY KEY,

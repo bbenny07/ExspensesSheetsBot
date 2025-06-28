@@ -2,7 +2,8 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
-from services.user_data import get_or_create_name_user_file, find_closest_category, find_categories_for_user, get_user_categories, get_all_rows, edit_row_in_table, delete_row_if_empty_after_clear
+from services.user_data import (get_or_create_name_user_file, find_closest_category, 
+    find_categories_for_user, get_user_categories, get_all_rows, edit_row_in_table, delete_row_if_empty_after_clear)
 from keyboards.inline_keyboards import  (
     get_travel_mode_keyboard, get_delete_travel_confirmation_keyboard,
     get_enter_new_travel_keyboard, get_choose_travel_keyboard, get_row_edit_cancel_keyboard,
